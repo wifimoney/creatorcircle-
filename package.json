@@ -1,0 +1,8 @@
+{
+  "name": "creator-circle",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm --parallel dev"
+  }
+}
