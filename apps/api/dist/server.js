@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { verifyToken } from './lib/privy';
+import { createTipPaymentRequest, verifyTipPayment } from './lib/x402';
 export const app = new Hono();
 // Auth middleware
 const authMiddleware = async (c, next) => {
@@ -23,4 +24,31 @@ app.get('/health', c => {
 app.get('/me', authMiddleware, c => {
     const user = c.get('user');
     return c.json(user);
+});
+app.post('/tip', async (c) => {
+    const paymentProof = c.req.header('X-PAYMENT');
+    // If no payment proof, return 402 with payment request
+    if (!paymentProof) {
+        const paymentRequest = createTipPaymentRequest();
+        return c.json({
+            error: 'Payment required',
+            payment: paymentRequest,
+        }, 402);
+    }
+    // Verify payment
+    const verification = await verifyTipPayment(paymentProof);
+    if (!verification.valid) {
+        const paymentRequest = createTipPaymentRequest();
+        return c.json({
+            error: 'Invalid payment',
+            payment: paymentRequest,
+        }, 402);
+    }
+    // Payment successful - log tx hash
+    console.log('Tip payment successful. Transaction hash:', verification.txHash);
+    return c.json({
+        success: true,
+        message: 'Tip received',
+        txHash: verification.txHash,
+    });
 });
