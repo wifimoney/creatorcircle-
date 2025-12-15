@@ -33,3 +33,4 @@ export async function verifyTipPayment(paymentProof: string) {
     txHash,
   }
 }
+
